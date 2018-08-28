@@ -1,0 +1,626 @@
+---
+output:
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: true
+fontsize: 12pt
+geometry: margin=0.75in
+csl: ecology.csl
+bibliography: White_bib.bib
+header-includes: 
+     \usepackage{float}
+    \usepackage{lineno}
+    \renewcommand{\thepage}{S\arabic{page}} 
+    \renewcommand{\thesection}{S\arabic{section}}  
+    \renewcommand{\thetable}{S\arabic{table}}  
+    \renewcommand{\thefigure}{S\arabic{figure}}
+    \renewcommand{\theequation}{S\arabic{equation}}
+    \usepackage{hyperref}
+    \usepackage{gensymb}
+    \usepackage[round]{natbib}  \bibpunct[:]{(}{)}{,}{a}{}{;}
+    \floatplacement{figure}{H}
+---
+
+2018
+\vspace{2cm}
+\begin{center}
+{\large Supplementary Material for \\ \textbf{The role of environmental variability in the evolution of phenology}} \\
+
+\vspace{1cm}
+
+\textsc{Easton R. White$^{1,2}$ , Kalle Parvinen$^{3}$}, and \textsc{Ulf Dieckmann$^5$} 
+		\vspace{2mm}
+		
+\emph{\small $^1$Center for Population Biology, University of California-Davis, Davis, California, USA \\
+			$^3$Department of Mathematics and Statistics, University of Turku, Turku, Finland \\ 
+			$^4$Evolution and Ecology Program, International Institute for Applied Systems Analysis Laxenburg, Austria}
+		\vspace{0.5mm}
+		
+$^2$Corresponding author: eawhite@ucdavis.edu
+	\vspace{2 mm}
+\tableofcontents
+
+\vspace{1cm}
+All code for these plots and those found in the manuscript can be found at \hyperref[]{www.github.com/erwhite1}
+
+
+\end{center}
+
+\pagebreak
+
+\linenumbers
+
+
+
+######################################################################################
+######################################################################################
+######################################################################################
+
+\section{Model parameterization}
+
+\subsection{Environment}
+For the collared pika in the Yukon, timing of snowmelt and the amount of snow accumulation appear to be important factors for the timing of reproduction [@Morrison2007]. We assume the environment, specifically the amount of snow (cm) on the ground, is a decay process where snow melts over the course of the year. The initial condition is therefore the amount of snow present at the beginning of the season, which is arbitrarily set at March 15th. Unfortunately, there does not exist good environmental data at the study site at Ruby Range (see main text) and we instead use weather information from the Environment Canada weather station at Burwash Landing (61$^\circ$ 22'N, 139$^\circ$ 3'W). Therefore the weather information is useful in a relative sense regarding the amount of snow and timing of snowmelt at the study site [@Morrison2009]. 
+
+
+
+```{r,echo=F,fig.cap="Frequency of the amount of snow present (cm) on the ground on March 15th of each year from 1989-2014. The data is from Environment Canada Burwash A station (61\\degree 22'N, 139\\degree 03'W, elevation: 806m).\\label{fig:E0_plot}", fig.width=4,fig.height=4}
+setwd("~/Desktop/Research/pika-reproductive-timing/Empirical_data_and_supp_mat/yukon_environmental_data/")
+#Code to pull in environmental data, clean it up
+# \ref{fig:plot} - code for refereding
+years=1989:2014
+years=subset(years,years != 2002) #bad initial condition
+
+march15_snowlevel= matrix(0,nrow=1,ncol=length(years))
+colnames(march15_snowlevel)=years
+for (j in 1:length(years)){
+  year=years[j]
+  
+  assign(paste('data',year,sep='') , read.csv(list.files( pattern = paste(year)),header=T,skip=24,sep=','))
+  current_year=eval(as.symbol(paste('data',year,sep='')))
+  current_year$JulianDay=1:nrow(current_year)
+  
+  
+  march15_snowlevel[j]=current_year$Snow.on.Grnd..cm.[current_year$Month==3 & current_year$Day==15]
+
+
+}#end loop
+par(mfrow=c(1,1),mar=c(5,5,0.5,0.5),oma=c(0,0,0,0))
+hist(march15_snowlevel,main=' ',ylim=c(0,0.05),freq = F,breaks=10,xlim=c(0,60),las=1,ylab='Frequency',xlab='snow on ground (cm) on March 15th',cex=1.2)
+box()
+```
+
+```{r,echo=F, fig.cap='Fitted curves for the change in snow depth since March 15th of each year. The intercept is held constant for each curve fit.\\label{fig:snow_fit_plot}'}
+#Here is where I estimate e
+setwd("~/Desktop/Research/pika-reproductive-timing/Empirical_data_and_supp_mat/yukon_environmental_data/")
+
+
+#Code to pull in environmental data, clean it up
+par(mfrow=c(5,5),mar=c(0.5,0,0,0),oma=c(7,7,1,1))
+years=1989:2014
+years=subset(years,years != 2002) #bad initial condition
+
+march15_snowlevel= matrix(0,nrow=1,ncol=length(years))
+colnames(march15_snowlevel)=years
+estimated_values_for_e = matrix(0,nrow=1,ncol=length(years))
+
+for (j in 1:length(years)){
+  year=years[j]
+  
+  assign(paste('data',year,sep='') , read.csv(list.files( pattern = paste(year)),header=T,skip=24,sep=','))
+  current_year=eval(as.symbol(paste('data',year,sep='')))
+  current_year$JulianDay=1:nrow(current_year)
+  
+  
+  march15_snowlevel[j]=current_year$Snow.on.Grnd..cm.[current_year$Month==3 & current_year$Day==15]
+
+########################################################
+# ###Estimate stuff during one year
+# #currently goes from march 15th to august 31st, this is 170 days total
+  #Haying occurs from June to mid september
+ subsetdata= subset(current_year,current_year$Month>=3 & current_year$Month<=8)
+ subsetdata=subsetdata[15:nrow(subsetdata),] 
+# 
+ if (j %in% c(2:5,7:10,12:15,17:20)){
+ plot(1:nrow(subsetdata),subsetdata$Snow.on.Grnd..cm.,ylim=c(0,60),
+           ylab='Snow on ground (cm)',xlab='Day since March 15th',main=' ',pch=16,xaxt='n',yaxt='n')
+}else if (j %in% c(1,6,11,16)) {
+  plot(1:nrow(subsetdata),subsetdata$Snow.on.Grnd..cm.,ylim=c(0,60),
+       ylab='Snow on ground (cm)',xlab='Day since March 15th',main=' ',pch=16,xaxt='n',las=1)
+}else if (j %in% c(22:25)){
+  plot(1:nrow(subsetdata),subsetdata$Snow.on.Grnd..cm.,ylim=c(0,60),
+       ylab='Snow on ground (cm)',xlab='Day since March 15th',main=' ',pch=16,yaxt='n',las=1)
+}else{
+  plot(1:nrow(subsetdata),subsetdata$Snow.on.Grnd..cm.,ylim=c(0,60),
+       ylab='Snow on ground (cm)',xlab='Day since March 15th',main=' ',pch=16,las=1)
+}
+# 
+# 
+ mtext(year,side=3,line=-2)
+# 
+days=1:length(subsetdata$Snow.on.Grnd..cm.)
+days=days#/length(days)
+# 
+# #calculate slope with a set intercept
+model=lm( log(subsetdata$Snow.on.Grnd..cm+1) ~ 0 + days, 
+         offset=rep(log(subsetdata$Snow.on.Grnd..cm+1)[1], length(days)))
+# 
+ curve((subsetdata$Snow.on.Grnd..cm+1)[1]*exp(coef(model)*x),from=0,to=170,add=T,col='red',lwd=2)
+
+ estimated_values_for_e[j]=(coef(model))
+
+}#end loop
+#print(mean(estimated_values_for_e))
+
+mtext('Time since March 15th',1,outer=T,font=2,line=4)
+mtext('Snow on ground (cm)',2,outer=T,font=2,line=4)
+
+estimated_environmental_parameters=as.data.frame(t(rbind(as.numeric(years),estimated_values_for_e,as.numeric(march15_snowlevel))))
+colnames(estimated_environmental_parameters)=c('year','estimated_e','estimated_E0')
+
+#`r paste('$e$=',round(mean(estimated_values_for_e),2),sep='')`
+```
+
+Assuming a constant rate of decay in snow depth, we estimated the decay parameter, $\epsilon=$`r mean(estimated_environmental_parameters$estimated_e)`, using data on daily snow depth over the past two decades. We estimated a mean snow depth ($E_0$) on March 15th to equal `r mean(estimated_environmental_parameters$estimated_E0)`.
+
+
+\pagebreak
+
+
+
+
+
+\subsection{Birth rate}
+
+Past work has indicated that pikas in the Yukon have one litter per year [@Franken2004b] of between 2.1 and 3 individuals [@SmithWeston1990]. In our model, we assume a birth pulse. Therefore, each female has all of her offspring within a given year at the same time. Thus, the number of offspring born in a year is simply the average number of female offspring (i.e. we halve the overall birth rate to 1.5) multiplied by the number of adult females.
+
+
+\subsection{Adult summer mortality}
+
+There are not field estimates of adult summer mortality, but it is thought to be low (J.D. Nagy, personal communication). Between 1995-2009, @COSEWIC2011 estimated a yearly mortality rate of 0.63 for female adult pikas. We assume a modest percentage of mortality occurs in summer, around 0.15, or a quarter of the yearly mortality rate. We can use this estimate and solve for $u_A$ in the within season equation for adults, we obtain an estimate $u_A = -0.001$. 
+
+\subsection{Juvenile summer mortality}
+There are often high rates of mortality for juveniles after birth [@Millar1974]. In addition, pikas are known to abandon entire litters if weather conditions are poor. Both of these processes act early in the reproductive season. However, little is known about either process for our particular species of interest. For a related species, \emph{Ochotona princeps}, 21% of offspring may die before weaning occurs [@Millar1974].
+
+We assume a juvenile summer mortality function that is affected by current environmental conditions in equation 1 of the main manuscript. Here, $u_J$ is the summer mortality rate for juveniles when there is no snow present, optimal environmental conditions. Then, $u_E + u_J$ is the maximum mortality rate when there is a lot of snow present. Lastly, $K$ is the half saturation constant, or the amount of snow at which there is $u_E/2$ mortality rate, that determines the shape of the saturating curve between mortality and $E(t)$. 
+
+Unfortunately, there are no published estimates of of these specific parameters as juveniles are only captured several months after they are born [@Franken2004b]. Weaning mortality occurs between birth and the time of first capture. Therefore, we used the difference between number of juveniles captured each year [@COSEWIC2011] and the maximum birth rate, to try and estimate the juvenile summer (or weaning) mortality rate. We found that the weaning mortality rate ranged from 0.27 to 0.76 each year.
+
+First, we assumed that juvenile mortality without snow, $u_J$, was the same as the adult summer mortality, $u_A$. Unfortunately, these parameters were non-identifiable due to the limited number of data points to estimate such a complicated function. Therefore, we resorted to using the model itself to estimate $u_E$ and $K$. In an average snowfall year, a value of $u_E = 0.005$ and $K = 1$ results in a summer mortality rate of 28%, in line with previous work [@Millar1974].
+
+<!--
+We then calculated the estimated summer mortality rate for different combinations of $u_E$, and $K$ for each year where the average day of birth was known [@Franken2004b]. Between the years 1995 to 2000, @Franken2004b estimated birth dates at the study site. We use these birth dates, combined with snow fall data, and the yearly weaning mortality estimates above to calculate $u_E$ and $K$. The mortality rate in any given year is one minus the integral from the birth date to the end of the season of juvenile mortality:
+
+Using our within-year model equations, we can solve for the within-season survival of juvenile pikas. 
+\begin{equation}
+  \mbox{mortality rate} = 1 - e^{-u_J (243- \tau) - u_E \int_{\tau}^{243} \frac{E(0) e^{\epsilon t}}{K + E(0) e^{\epsilon t}}}
+  \label{juv_mort_eq}
+\end{equation}
+
+Here 243 represents the last day of the reproductive season, $\tau$ is day of reproductive timing, and other parameters are described in equation 1 of the main text. We used equation \ref{juv_mort_eq} and our estimates of weaning mortality to estimate $u_E$ and $K$. -->
+
+
+
+
+
+
+```{r,echo=F,eval=F,fig.height=5,fig.width=5,warning=F,message=F}
+#August 31st is day 243 of the year
+setwd("~/Desktop/Research/pika-reproductive-timing")
+yukon <- read.csv(file = 'Empirical_data_and_supp_mat/pika_census_data/2011COSEWIC_Yukon_abundance_estimates.csv',header=T)
+
+yukon_subset=subset(yukon,yukon$year>1994 & yukon$year<2001)
+squared_error = function(yukon_subset,estimated_environmental_parameters,u_J,u_E,K){
+    
+    years=1995:2000
+    error=numeric(length(years))
+    for (i in 1:length(years)){
+      year=years[i]  
+      birth_date=yukon_subset$timing_reproduction_julian_day[yukon_subset$year==year]x
+      E0 = estimated_environmental_parameters$estimated_E0[estimated_environmental_parameters$year==year]
+      decay_param  = estimated_environmental_parameters$estimated_e[estimated_environmental_parameters$year==year]
+      actual_survival =  yukon_subset$weaning_survival_rate[yukon_subset$year==year]
+      
+      f <- function(t,E0,decay_param,K){(E0*exp(decay_param*t))/(K + E0*exp(decay_param*t))}  
+    
+      survival_rate =  exp((-u_J*(243-birth_date)) - 
+                             u_E*integrate(f,lower=birth_date,upper = 243,E0=E0,decay_param=decay_param,K=K)$value)
+      print(survival_rate)
+      #print(cbind(actual_survival,survival_rate))
+      error[i]=(actual_survival-survival_rate)^2
+    }
+  
+  
+    return(c(sum(error),u_J,u_E,K))
+}
+
+
+######################################
+
+
+u_J_vector = seq(0.0001,0.1,by=0.001)
+u_E_vector = seq(0.0001,0.1,by=0.001)
+K_vector = seq(0.1,10,by=0.1)
+z=expand.grid(u_E_vector,K_vector)
+MSE=as.data.frame(matrix(0,nrow=nrow(z),ncol=4))
+colnames(MSE)=c('squared_error','u_J','u_E','K')
+for (q in 1:nrow(z)){
+ # u_J = 0.001#runif(1,min = 0.0001,max=0.1)
+  #u_E = runif(1,min = 0.00001,max=0.1)
+  #K= runif(1,min = 0.001,max=1)
+  MSE[q,] = squared_error(yukon_subset,estimated_environmental_parameters,0.001,z$Var1[q],z$Var2[q])
+  
+}
+
+#MSE[which(MSE[,1]==min(MSE[,1])),]
+#print(head(MSE[order(MSE[,1]),]))
+
+#juv_mort=MSE[order(MSE[,1]),]
+#print(colMeans(juv_mort[1:100,]))
+#curve(x/(mean(juv_mort[1:100,4])+x),from=0,to=50)
+#plot(juv_mort[1:100,3],juv_mort[1:100,4])
+#text(juv_mort[1:100,3],juv_mort[1:100,4],labels = 1:100,pos = 4,cex=0.6)
+
+min_error_row = which(MSE$squared_error==min(MSE$squared_error))
+juv_mort=MSE[order(MSE[,1],decreasing = F),]
+#require(lattice)
+#levelplot(MSE$squared_error~MSE$u_J*MSE$K,col.regions = terrain.colors(1000),cuts=100,ylab="weaning mortality probability",xlab="dispersal mortality probability",
+#panel = function(...){ 
+#   panel.levelplot(...) 
+#   panel.abline(h = 0.12,lwd = 2,type = 2) 
+#   panel.abline(v = .02,lwd = 2,type = 2) }
+#           )
+# )
+par(mfrow=c(1,1),oma=c(0,0,0,0),mar=c(4,4,0.5,0.5))
+plot(juv_mort$u_E[1:500],juv_mort$squared_error[1:500],col=rgb(juv_mort$K[1:500]/max(juv_mort$K[1:500]),0.5,0.5),pch=15,ylab='mean squared error',xlab=expression(u[E]),cex.lab=1.2)
+arrows(0.04,juv_mort[1,1],juv_mort[1,3],juv_mort[1,1])
+t
+text(0.04,juv_mort[1,1],labels = 'best fit parameter values',pos = 4)
+```
+
+
+
+
+
+
+
+
+
+\subsection{Plant consumption}
+We assume that plants are consumed by juveniles and adults by Holling type I or type II functional responses. In the model, we describe different functions for juveniles and adults, but we assume they have the same parameter values. In particular, there are two parameters $a$, the attack rate. And second, if using a type II response is $h$, the handling time.
+
+In our model, $a$ is the attack rate and is in units area/time as the amount of resources is given as a density. Biologically, $a$ is the amount of area a pika can search during a particular foraging bout. Pikas only travel short distances during foraging bouts.
+<!--
+$$
+a_A = \frac{\mbox{\# of foraging trips}}{\mbox{1 hour}} \cdot \frac{\mbox{24 hr}}{\mbox{1 day}} \cdot \frac{\mbox{area covered}}{\mbox{foraging trip}} 
+$$
+$$
+a_A = \frac{5.25 \mbox{trips}}{\mbox{hour}} \cdot \frac{\mbox{24 hr}}{\mbox{1 day}} \cdot \frac{X m^2}{\mbox{foraging trip}} = \mbox{???}
+$$
+-->
+Unfortunately, we do not have an estimate of the foraging area covered by pikas during a single trip. Therefore, we use our model to indirectly estimate $a_A$, an inverse modeling procedure [@White2014]. In order for pikas to achieve the mean grams per haypile found by the end of summer in @Morrison2009, $a_A$ = 3. 
+
+
+The handling time is the amount of time required for a pika to collect 1 gram of plant material. We do not have a direct estimate of handling time, but we can use the maximum number of foraging bouts within an hour to estimate handling time. Each trip takes an estimated 2.4 minutes [@Morrison2009] and results in on average 0.62 grams of plant material. This results in a handling time, $h_A$ of 0.00269 days/gram food.
+
+<!--
+$$
+h_A = \frac{\mbox{minutes}}{\mbox{trip}} \cdot \frac{ 1 \mbox{trip}}{\mbox{grams food}} \cdot \frac{1 \mbox{day}}{ 24 \mbox{hour}}  \frac{\mbox{hour}}{60 \mbox{minutes}}
+$$
+$$
+h_A = \frac{2.4 \mbox{ minutes}}{\mbox{trip}} \cdot  \frac{ 1 \mbox{ trip}}{0.62 \mbox{ grams food}} \cdot \frac{1 \mbox{day}}{ 24 \mbox{hour}} \cdot  \frac{\mbox{hour}}{60 \mbox{minutes}} = 0.00269 \frac{\mbox{days}}{\mbox{gram food}}
+$$
+-->
+In the results of the main text, we focus on a linear (type I) functional response when the handling time is zero, this simplifies what attractors are possible. 
+
+\subsection{Resource reserve (haypile size)}
+
+Through resource consumption, as described in the previous section, and the use of those resources, a resource reserve, or haypile size, can either increase or decrease. We assume resources collected during foraging are converted into a resource reserve, in this case haypile size, at a rate determined by $w_A = 1/3$ [@Smith1984a]. This rate is calculated as the fraction of time foraging spent haying versus the combined time spent haying and feeding. 
+
+\subsection{Resource decay}
+  
+We assume resources, or haypile size, decays at a constant rate. @Dearing1997 constructed eight artificial haypiles in West Knoll, Colorado. @Dearing1997 then estimated the amount of biomass loss each month in summer and winter. We use these results to estimate the decay parameter, $\beta$, of haypile size, $B_A$. We assume this parameter is the same for both juveniles and adults. In the equation below, 62 is the number of days over which @Dearing1997 estimated haypile decay at a study site in Colorado.
+  $$
+  B_A(t) = B_A(0) e^{\beta_A t}
+  $$
+  $$
+  7.3 = 8 e^{\beta_A 62}
+  $$
+  $$
+  \beta_A = -0.00147 \frac{grams}{day}
+  $$
+  
+This estimation is probably different at the Yukon site given different plant material and environmental conditions, but no similar experiments have been conducted there. 
+
+
+\subsection{Plant growth}
+Peak vegetation biomass near talus occurs in late July at the study site and senescence begins soon thereafter [@McIntire2005]. From past work, we have estimates of the relative amount of AGB (above ground biomass) in absence of pikas from pika exclusion plots. @McIntire2005 estimated plant abundance is for four different time points during one summer at the study site. Plant growth increases until July and then declines before winter begins.
+
+We assume plant growth in the absence of predation is governed by a simple logistic growth equation. Therefore, both the intrinsic rate of growth $r$ and the carrying capacity $K_R$ need to be estimated. We use data from the  pika-exclusion experiment on plant growth [@McIntire2005]. Although the data is limited, we were able to fit the solution to the logistic growth equation to obtain estimates for $r$ and $K_R$ (Fig. \ref{fig:plant_growth}). We assume that growth starts from a small amount (3 g/$\mbox{m}^2$) of biomass each spring.
+
+```{r,echo=F, fig.cap="Fit of logistic growth model for plant density data found in McIntire and Hik 2005.\\label{fig:plant_growth}"}
+#Commands to find parameter values for logistic growth model of plant data
+
+day_of_year = (c(74,174,191,208,226)-74)#/360 
+plant_biomass = c(3,80,115,140,115) # #values are grams per meter squared
+
+#day_of_year=runif(100,0,1)
+#plant_biomass=(K*50*exp(r*day_of_year))/(K+50*(exp(r*day_of_year)-1)) + rnorm(100,0,1)
+
+# look at it
+par(mfrow=c(1,1),oma=c(0,0,0,0),mar=c(5,5,1,1))
+plot(day_of_year,plant_biomass,pch=16,xlim=c(0,280),ylim=c(0,150),xlab='days since March 15th',las=2,cex=1.2,ylab=expression(paste('plant aboveground biomass ',(g/m^2),sep=' ')))
+#axis(1,at = seq(0,300,by=31),tick = T,labels = substr(subsetdata$Date.Time,6,10))
+
+# some starting values
+r = 0.04
+K=150
+fit = nls(plant_biomass ~ (K*3*exp(r*day_of_year))/(K+3*(exp(r*day_of_year)-1)), start=list(K=K,r=r))
+model_coefficients=coef(fit)
+# summarise
+#summary(fit)
+new = data.frame(day_of_year = seq(min(day_of_year),250,len=200))
+lines(new$day_of_year,predict(fit,newdata=new),col='red',lwd=3)
+```
+
+Assuming a logistic equation for plant growth, our model estimated `r paste('$r$=',round(model_coefficients[2],4),sep='')` and `r paste('$K_R$=',round(model_coefficients[1],4),sep='')`.
+
+
+\subsection{Over-winter parameterization}
+
+Pikas often experience high over-winter mortality [@Morrison2007]. Their survival depends on the size of their haypile before winter begins. Therefore, we assumed a saturating function where over-winter survival depends on haypile size. @Morrison2009 examined over-winter survival and found it depended on when pikas initiated haying, and thus their haypile size. We assume a high potential over-winter survival of 0.9, which is likely rarely achieved as pikas are not able to build large enough haypiles most years, but it is just a maximum value. We roughly estimate the half-saturation parameter to be near $k_A$ = 2500, based on the probability of survival for pikas over one winter [@Morrison2009].
+
+We assume that all juvenile pikas either become adults (acquiring a territory) or die over winter [@SmithWeston1990]. Therefore, we do not need a function for juvenile over-winter mortality.
+
+
+
+
+
+
+
+
+
+
+
+\pagebreak
+
+####################################################################################
+####################################################################################
+
+\section{Sensitivity analyses}
+
+Here we illustrate the sensitivity of the predicted evolutionary stable strategies (ESS) and day of reproductive timing to changes in parameter values. Assuming no environmental stochasticty, we varied parameters away from defaults (see Table 1 in main text) and then determined the ESS and realized reproductive timing. We specifically examined the juvenile mortality parameters as these were not estimated from field data. Additionally, we examined the birth rate and over-winter mortality rate because of their importance in determining evolutionary outcomes.
+
+```{r,echo=F}
+grey_box = function(ESS_output){
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+  
+  rect(xleft=ifelse((head(which(is.na(ESS_output$ESS)),1)-1)<1, min(param_value), ESS_output$param_value[head(which(is.na(ESS_output$ESS)),1)-1]),ybottom =-10,xright = ifelse((tail(which(is.na(ESS_output$ESS)),1)+1)>length(param_value), max(param_value), ESS_output$param_value[tail(which(is.na(ESS_output$ESS)),1)+1]), ytop = 200,col = rgb(0.5,0.5,0.5,0.2),border = NA)
+}
+```
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values of birth rate (litter size). The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text. \\label{fig:ESS_vs_birth_rate}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_birth_rate.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+
+grey_box(ESS_output)
+abline(v=1.5,col='black')
+
+
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.9)
+mtext(expression(paste('birth rate (',alpha,')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.6)
+abline(v=1.5,col='black')
+
+grey_box(ESS_output)
+#dev.off()
+```
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values juvenile summer mortality with no snow present, $u_J$. The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_u_j}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_u_j.csv')
+ESS_output[ESS_output=='NaN']=NA
+ESS_output$ESS[ESS_output$ESS==0]=NA
+ESS_output$RT[ESS_output$RT==0]=NA
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.95)
+abline(v=0.001,col='black')
+grey_box(ESS_output)
+
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.001,col='black')
+grey_box(ESS_output)
+
+mtext(expression(paste('juvenile summer no snow mortality rate (',u[j],')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+#dev.off()
+```
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values juvenile summer mortality with snow present, $u_E$. The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_u_E}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_u_E.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+ESS_output$ESS[ESS_output$ESS==0]=NA
+ESS_output$RT[ESS_output$RT==0]=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.005,col='black')
+grey_box(ESS_output)
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.005,col='black')
+grey_box(ESS_output)
+
+mtext(expression(paste('juvenile summer snow mortality rate (',u[E],')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+#dev.off()
+```
+
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values juvenile summer mortality half-saturation constant, $K$. A larger value of $K$ implies pika mortality increases faster with snow depth. The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_K}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_k.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=1,col='black')
+#grey_box(ESS_output)
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.9)
+#grey_box(ESS_output)
+mtext(expression(paste('juvenile summer mortaity half-saturation constant (',K,')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+abline(v=1,col='black')
+#dev.off()
+```
+
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values of attack rate for both juveniles ($a_J$) and adults ($a_A$). The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_attack_rate}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_attack_rate.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+grey_box(ESS_output)
+abline(v=3,col='black')
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+grey_box(ESS_output)
+abline(v=3,col='black')
+mtext(expression(paste('attack rate (',a,')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+#dev.off()
+```
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values of maximum over-winter survival rate for both juveniles ($\\sigma_J$) and adults ($\\sigma_A$). The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_over_winter}",fig.height=3}
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_sigma_A_and_J.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.9,col='black')
+grey_box(ESS_output)
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.9)
+grey_box(ESS_output)
+abline(v=0.9,col='black')
+mtext(expression(paste('over-winter maximum survival rate (',sigma,')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+#dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################################################################
+####################################################################################
+
+```{r,echo=F,message=F,include=FALSE,eval=F}
+# Example PIP plot pulling results directly in from Matlab
+require(R.matlab)
+require(lattice)
+par(mfrow=c(1,1))
+setwd("~/Desktop/Research/pika-reproductive-timing")
+invader_fitness_output=readMat('Empirical_data_and_supp_mat/findESS_output_invader_fitness.mat')
+emptyCell=invader_fitness_output$emptyCell
+contour(z=emptyCell,x=seq(2,18,by=0.1),y=seq(2,18,by=0.1),col=1,nlevels=30,ylim=c(2,18),xlim=c(2,18))
+
+x=seq(2,18,by=0.1);y=seq(2,18,by=0.1)
+grid<-expand.grid(x=x,y=y)
+levelplot(emptyCell~x*y,grid,cuts=10,colorkey = T,contour=T,labels=T,pretty=T,region=T,col.regions = terrain.colors(50))
+
+
+```
+
+```{r,echo=F,eval=F,include=FALSE}
+
+output=read.csv('findESS_output_table.csv',header=T)
+
+par(mfrow=c(1,2))
+plot(output$E_ini,output$ESS,cex=1.2,xlim=c(0,20),ylim=c(0,10),ylab='ESS (threshold value)',xlab=paste('E[0]',""),las=1)
+
+plot(output$E_ini,output$time_within_season,ylim=c(0,0.25),xlim=c(0,20),cex=1.2,ylab='ESS (time within season)',xlab=paste('E[0]',""),las=1)
+
+```
+
+
+
+
+
+  \pagebreak
+  
+
+# References
+
+<div id="refs"></div>

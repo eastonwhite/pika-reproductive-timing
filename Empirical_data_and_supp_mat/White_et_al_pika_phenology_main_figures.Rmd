@@ -1,0 +1,641 @@
+---
+output: 
+  pdf_document: 
+    fig_caption: yes
+    keep_tex: yes
+bibliography: White_bib.bib
+header-includes: 
+    \usepackage{float}
+    \usepackage{hyperref}
+    \usepackage{gensymb}
+editor_options: 
+  chunk_output_type: console
+---
+
+2018
+\vspace{7cm}
+\begin{center}
+{\large Manuscript figures for \\ \textbf{Opposing selective pressures on phenology in the face of climate change}} \\
+
+\vspace{1cm}
+
+Easton R. White, Kalle Parvinen, and Ulf Dieckmann
+\vspace{1cm}
+
+*To whom correspondence should be addressed. E-mail: eawhite@ucdavis.edu
+
+<!--
+\vspace{1cm}
+This PDF file includes:
+\begin{itemize}
+  \item Example within-season population dynamics for each state variable
+  \item Comparison of different reproductive cues for both deterministic and stochastic scenarios
+  \item ESS versus mean and variance in spring onset timing
+  \item Mean reproductive timing versus mean and variance in spring onset timing
+\end{itemize}
+
+\vspace{1cm}
+All code for these plots and those found in the manuscript can be found at \hyperref[]{www.github.com/erwhite1}
+-->
+
+\end{center}
+
+\pagebreak
+
+
+<!-- single year of population dynamics-->
+```{r,echo=F,eval=F,include=F,}
+# This code chuck creates an example 2x2 figure of within-year population dynamics for several states variables
+state = read.table('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/example_pop_dyn4.txt',sep=',')
+state=state[,1:7]
+colnames(state)=c('time','snow_depth','adult_dens','juv_dens','juv_reserve','adult_reserve','plant_biomass')
+
+  #pdf('simple_pop_dyn_plot.pdf',width = 6,height = 6)
+  par(mfrow=c(2,2),mar=c(0.5,6,0,0),oma=c(4.5,0.5,0.5,1))
+  
+  plot(state$time,state$adult_dens,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,0.01),type='l',lwd=5,xaxt='n')
+  mtext(text = expression(paste('pika density (ind/', m^2,')',sep='')),side = 2,line=4,cex=1.4)
+  points(state$time,state$juv_dens,las=1,cex.lab=1.4,cex.axis=1.2,ylab='',xlab=' ',ylim=c(0,0.01),type='l',lwd=5,col='gray')
+  
+  #resource reserve  
+  plot(state$time,state$adult_reserve,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,5000),type='l',lwd=5,xaxt='n')
+  mtext(text = 'haypile size (grams)',side = 2,line=4,cex=1.4)
+  state$juv_reserve[1:188]=NA
+  points(state$time,state$juv_reserve,las=1,cex.lab=1.4,cex.axis=1.2,ylab='haypile size (grams)',xlab=' ',ylim=c(0,5000),type='l',lwd=5,col='gray')
+  
+   legend('topleft',legend = c('adult','juvenile'),col = c('black','gray'),pch = '-',pt.cex=4,cex=1.6)
+
+  plot(state$time,state$plant_biomass,las=1,cex.lab=1.4,cex.axis=1.2,ylab='',xlab=' ',ylim=c(0,150),type='l',lwd=5,xaxt='n')
+   mtext(text = expression(paste('plant biomass (g/', m^2,')',sep='')),side = 2,line=4,cex=1.4)
+   
+   axis(1,at = c(0,30,60,90,120,150),labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug') ,las=2,cex=1.6)
+     
+  plot(state$time,state$snow_depth,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,20),type='l',lwd=5,xaxt='n')
+   mtext(text = expression(paste('snow depth (', cm,')',sep='')),side = 2,line=4,cex=1.4)
+   
+   axis(1,at = c(0,30,60,90,120,150),labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug') ,las=2,cex=1.6)
+  
+dev.off()
+
+
+```
+
+
+Two years of population dynamics
+```{r,echo=F,eval=F,include=F,}
+# This code chuck creates an example 2x2 figure of within-year population dynamics for several states variables
+year1 = read.table('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/example_pop_dyn2.txt',sep=',')
+year1=year1[,1:7]
+colnames(year1)=c('time','snow_depth','adult_dens','juv_dens','juv_reserve','adult_reserve','plant_biomass')
+year1$juv_reserve[1:which(year1$juv_dens>0)[1]] = NA
+
+year2 = read.table('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/example_pop_dyn2.txt',sep=',')
+year2=year2[,1:7]
+colnames(year2)=c('time','snow_depth','adult_dens','juv_dens','juv_reserve','adult_reserve','plant_biomass')
+year2$time = year2$time+250
+year2$juv_reserve[1:which(year2$juv_dens>0)[1]] = NA
+
+state = rbind(year1,year2)
+
+  pdf('simple_pop_dyn_plot.pdf',width = 7,height = 6)
+  par(mfrow=c(2,2),mar=c(0.5,6,0,0),oma=c(4.5,0.5,0.5,1))
+  
+  
+  # Snow depth
+    plot(state$time,state$snow_depth,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,20),type='l',lwd=5,xaxt='n')
+   mtext(text = expression(paste('snow depth (', cm,')',sep='')),side = 2,line=2.8,cex=1.4)
+     rect(xleft = 170,ybottom = -10,xright = 250,ytop = 15000, col=rgb(0.5,0.5,0.5,0.5),border = NA)
+     mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.95)
+  
+  # Plant biomass
+       plot(state$time,state$plant_biomass,las=1,cex.lab=1.4,cex.axis=1.2,ylab='',xlab=' ',ylim=c(0,150),type='l',lwd=5,xaxt='n')
+   mtext(text = expression(paste('plant biomass (g/', m^2,')',sep='')),side = 2,line=3,cex=1.4)
+     rect(xleft = 170,ybottom = -10,xright = 250,ytop = 15000, col=rgb(0.5,0.5,0.5,0.5),border = NA)
+     mtext('(b)',side = 3,line = -2,cex=1.2,adj = 0.95)
+  
+     # Pika Population density
+  plot(state$time,state$adult_dens,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,0.0085),type='l',lwd=5,xaxt='n')
+  mtext(text = expression(paste('pika density (ind/', m^2,')',sep='')),side = 2,line=4,cex=1.4)
+  points(state$time,state$juv_dens,las=1,cex.lab=1.4,cex.axis=1.2,ylab='',xlab=' ',ylim=c(0,0.01),type='l',lwd=5,col='gray',lty=5)
+  rect(xleft = 170,ybottom = -10,xright = 250,ytop = 15000, col=rgb(0.5,0.5,0.5,0.5),border = NA)
+  mtext('(c)',side = 3,line = -2,cex=1.2,adj = 0.95)
+  
+     legend('topleft',legend = c('adult','juvenile'),col = c('black','gray'),pt.cex=4,cex=1.6,bty = 'n',lty=c(1,5),lwd=3)
+     axis(1,at = c(0,30,60,90,120,150,180),labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug','15-Sep') ,las=2,cex=1.6)
+      axis(1,at = c(0,30,60,90,120,150,180)+250,labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug','15-Sep') ,las=2,cex=1.6)
+     
+
+     
+     
+  #resource reserve  
+  plot(state$time,state$adult_reserve,las=1,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab=' ',ylim=c(0,11000),type='l',lwd=5,xaxt='n')
+  mtext(text = 'haypile size (grams)',side = 2,line=4,cex=1.4)
+  points(state$time,state$juv_reserve,las=1,cex.lab=1.4,cex.axis=1.2,ylab='haypile size (grams)',xlab=' ',ylim=c(0,5000),type='l',col='gray',lty=5,lwd=3)
+    rect(xleft = 170,ybottom = -1000,xright = 250,ytop = 15000, col=rgb(0.5,0.5,0.5,0.5),border = NA)
+  legend('topleft',legend = c('adult','juvenile'),col = c('black','gray'),pt.cex=4,cex=1.6,bty = 'n',lty=c(1,5),lwd=3)
+   mtext('(d)',side = 3,line = -2,cex=1.2,adj = 0.95)
+  
+    
+    
+
+
+   axis(1,at = c(0,30,60,90,120,150,180),labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug','15-Sep') ,las=2,cex=1.6)
+      axis(1,at = c(0,30,60,90,120,150,180)+250,labels = c('15-Mar','15-Apr','15-May','15-Jun','15-Jul','15-Aug','15-Sep') ,las=2,cex=1.6)
+  
+dev.off()
+
+
+```
+
+<!--
+```{r,echo=F,eval=F,include=F}
+#this is a 2x2 panel plot of det vs. stochastic and timing vs. environmental
+
+
+# Old code where I manually typed out results
+# trait_values_environ = seq(0.4,0.65,by=0.01)
+# trait_values_timing = seq(40,120,by=3)
+# 
+# points_environ_det = c(rep(0.65,times=5), 0.63,0.62,0.61,0.59, 0.58,0.57,0.56,0.55,0.54 ,0.54, sort(seq(0.43,0.53,by=0.01)))
+#                          
+# points_environ_stoch = c(0.63,0.61,0.6,0.58,0.57,0.56,0.54,0.53, rep(NA,times=7),0.5,0.48,sort(seq(0.41,0.46,by=0.01)),0.41,0.4,0.4)
+# 
+# points_timing_stoch = c(rep(118,times=6), sort(seq(55,115,by=3), decreasing = T))
+# points_timing_det = c( rep(118,times=8),115, sort(seq(82,109,by=3), decreasing = T), sort(seq(61,82,by=3), decreasing = T))
+
+#NEW CODE
+#pull in data
+#require(R.matlab)
+
+# Line here on data to pull in
+
+#Create plot
+  pdf('two_by_two_plot.pdf',width = 6,height = 6)
+    par(mfrow=c(2,2),mar=c(6,5.5,0,0),oma=c(.5,4.5,4.5,1))
+    
+            scatter.smooth(trait_values_timing,points_timing_det,type='n',lwd=2,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab= '',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),ylim=c(40,120),xlim=c(40,120))
+    segments(40,40,120,120,col = "black", lwd = 3, lty = 1)
+    
+
+    mtext('time cue',2,line=6,cex=1.4,font=2)
+    mtext('deterministic',3,line=1,cex=1.4,font=2)
+    mtext('mutant trait (day)',2,line=3.5,cex=1.4)
+    mtext('resident trait (day)',1,line=3.5,cex=1.4)
+  
+  scatter.smooth(trait_values_timing,points_timing_stoch,type='n',lwd=2,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab= '',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),ylim=c(40,120),xlim=c(40,120))
+    segments(40,40,120,120,col = "black", lwd = 3, lty = 1)
+    
+
+    mtext('stochastic',3,line=1,cex=1.4,font=2)
+    mtext('mutant trait (day)',2,line=3.5,cex=1.4)
+    mtext('resident trait (day)',1,line=3.5,cex=1.4)
+  
+    scatter.smooth(trait_values_environ,points_environ_det,type='n',lwd=2,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab= '',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),ylim=c(0.4,0.65),xlim=c(0.4,0.65))
+    segments(0,0,1,1,col = "black", lwd = 3, lty = 1)
+      mtext('mutant trait (cm)',2,line=3.5,cex=1.4)
+  mtext('resident trait (cm)',1,line=3.5,cex=1.4)
+  mtext('environmental cue',2,line=6,cex=1.4,font=2)
+  
+            scatter.smooth(trait_values_environ,points_environ_stoch,type='n',lwd=2,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab= '',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),ylim=c(0.4,0.65),xlim=c(0.4,0.65))
+    segments(0,0,1,1,col = "black", lwd = 3, lty = 1)
+      mtext('mutant trait (cm)',2,line=3.5,cex=1.4)
+  mtext('resident trait (cm)',1,line=3.5,cex=1.4)
+  
+  dev.off()
+
+
+```
+
+
+
+```{r,echo=F,eval=F,include=F}
+
+# 1x4 plot used in paper to show 1) ESS vs mean spring onset, 2) ESS vs variance in spring onset, and 3) Mean reproductive timing (not ESS) bs variance in spring onset
+pdf('ESS_vs_E0_and_var_time.pdf',width = 8,height = 5)
+  Eini_vector=10:20
+  predicted_ESS = c(103,105,106,107,108,109,110,111,112,112,113)
+  par(mfrow=c(1,3),mar=c(4.5,5,0.5,0.5))
+  #degree and span matter here
+    scatter.smooth(Eini_vector,predicted_ESS,type='n',lwd=2,cex.lab=1.4,cex.axis=1.2,ylab=' ',xlab='March 15th snow depth (cm)',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+    mtext('(a)',3,line = -2,at=6.7,cex = 1.4)
+    abline(v=18,lwd = 2, lty = 2)
+    mtext('ESS (cm)',2,line=3.5,font=2)
+  
+    theta_vector=seq(0.2,6,by=0.2)[8:20]
+    variance_vector = 18 + (18^2)/theta_vector
+    predicted_ESS = c(rep(0.51,6),0.53,0.51,0.53,0.51,rep(0.53,3))
+    predicted_timing =c(76.3444,76.6734, 81.6360, 83.2749,79.9553,   81.3685,84.0552,80.4983,79.5028,84.5369,82.2214,83.1949,85.6473)
+    predicted_timing=c(76.1415,78.5928,79.7026,79.836,81.4576,82.5238,   81.2722,81.8722, 81.3885,85.0640,82.7032,83.4487, 85.6429)
+    
+    #pdf('myplot2.pdf',width = 4,height = 6)
+    #par(mfrow=c(1,1),mar=c(4.5,4.5,0.5,0.5))
+    scatter.smooth(variance_vector,predicted_ESS,type='n',lwd=5,cex.lab=1.4,cex.axis=1.2,ylab='',xlab='snow depth variance',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',xlim=c(110,180))
+    mtext('(b)',3,line = -2,at=113,cex = 1.4)
+    abline(v=133,lwd = 2, lty = 2)
+    mtext('ESS (cm)',2,line=3.8,font=2)
+    
+    scatter.smooth(variance_vector,predicted_timing,type='n',lwd=5,cex.lab=1.4,cex.axis=1.2,ylab='mean timing of reproduction ',xlab='snow depth variance',las=1,font.lab=2,lpars =list(col = "black", lwd = 3, lty = 1),xlim=c(110,180))
+    mtext('(c)',3,line = -2,at=113,cex = 1.4)
+    abline(v=133,lwd = 2, lty=2)
+           
+       
+dev.off()
+
+
+
+```
+-->
+
+
+
+
+
+
+
+This is the main plot to look at ESS with spring timing
+```{r,echo=F,eval=T,include=F}
+# Build four plots: 1) ESS vs E0, 2) RT vs E0, 3) ESS vs Var, 4) RT vs Var
+
+# Pull in matlab results
+
+require(R.matlab)
+#invader_fitness_output=readMat('../Modeling/BirthPulseModel/FINAL_MODELS-general-attractor/findESS_output_invader_fitness_environ_rule.mat')
+
+pdf('Manuscript/figures/ESS_and_RT_deterministic_case.pdf',width = 10,height = 4)
+par(mfrow=c(1,3),mar=c(4.5,6,0.5,0.75),oma=c(0.5,0,0,0))
+
+
+environ_cue = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_environmental_cue_no_noise.csv')
+
+scatter.smooth(environ_cue$Eini,environ_cue$ESS, las=1,cex.lab=1.4,pch=16,cex.axis=1.2,lwd=2,ylab=' ',xlab ='',ylim=c(1.9,3.8),lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext(side = 2,'ESS (cm of snow)',cex = 1.2,line=4)
+mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.05)
+mtext(' Early',side = 1,line = -2.25,adj = 0.05,cex = 1.2)
+mtext('Spring',side = 1,line = -1.25,adj = 0.05,cex = 1.2)
+mtext('Late',side = 1,line = -2.25,adj = 0.95,cex = 1.2)
+mtext('  Spring',side = 1,line = -1.25,adj = 0.975,cex = 1.2)
+
+abline(v=18,lty=1,lwd=1)
+
+scatter.smooth(environ_cue$Eini,environ_cue$RT, las=1,cex.lab=1.4,pch=16,yaxt='n',cex.axis=1.2,lwd=2,ylab=' ',ylim=c(80,90),xlab ='',lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext('Reproductive timing',2,cex = 1.2,line=4)
+mtext('(b)',side = 3,line = -2,cex=1.2,adj = 0.05)
+axis(2,at = 80:90,labels = format(as.Date((80:90)+75, origin=as.Date("1960-01-01")),format="%d-%b"),las=1)
+mtext(' Early',side = 1,line = -2.25,adj = 0.05,cex = 1.2)
+mtext('Spring',side = 1,line = -1.25,adj = 0.05,cex = 1.2)
+mtext('Late',side = 1,line = -2.25,adj = 0.95,cex = 1.2)
+mtext('  Spring',side = 1,line = -1.25,adj = 0.975,cex = 1.2)
+abline(v=18,lty=1,lwd=1)
+par(xpd=NA)
+rect(-12.1,78.7,22.8,90.5)
+
+
+timing_cue = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_timing_cue_no_noise.csv')
+scatter.smooth(timing_cue$Eini,timing_cue$ESS, las=1,cex.lab=1.4,pch=16,yaxt='n',cex.axis=1.2,lwd=2,ylab=' ',ylim=c(80,90),xlab= '',lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext('Reproductive timing',2,cex = 1.2,line=4)
+mtext('(c)',side = 3,line = -2,cex=1.2,adj = 0.05)
+axis(2,at = 80:90,labels = format(as.Date((80:90)+75, origin=as.Date("1960-01-01")),format="%d-%b"),las=1)
+mtext(' Early',side = 1,line = -2.25,adj = 0.05,cex = 1.2)
+mtext('Spring',side = 1,line = -1.25,adj = 0.05,cex = 1.2)
+mtext('Late',side = 1,line = -2.25,adj = 0.95,cex = 1.2)
+mtext('  Spring',side = 1,line = -1.25,adj = 0.975,cex = 1.2)
+
+mtext(expression(paste('Amount of snow (cm) on March 15th (',E[0],')'),sep=''),side = 1,line = -1.2,at = 0.55,outer = T,cex=1.2)
+par(xpd=FALSE)
+abline(v=18,lty=1,lwd=1)
+
+dev.off()
+```
+
+
+This is the main plot to look at ESS with variance
+```{r,echo=F,eval=T,include=F}
+# Build four plots: 1) ESS vs E0, 2) RT vs E0, 3) ESS vs Var, 4) RT vs Var
+
+# Pull in matlab results
+
+require(R.matlab)
+#invader_fitness_output=readMat('../Modeling/BirthPulseModel/FINAL_MODELS-general-attractor/findESS_output_invader_fitness_environ_rule.mat')
+
+pdf('Manuscript/figures/ESS_and_RT_stochastic_case.pdf',width = 10,height = 4)
+par(mfrow=c(1,3),mar=c(4.5,6,0.5,0.75),oma=c(0.5,0,0,0))
+
+
+environ_cue = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_environmental_cue_with_noise.csv')
+
+scatter.smooth(environ_cue$Eini_variability,environ_cue$ESS, las=1,cex.lab=1.4,pch=16,cex.axis=1.2,lwd=2,ylab=' ',xlab ='',ylim=c(1.9,3.8),lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext(side = 2,'ESS (cm of snow)',cex = 1.2,line=4)
+mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+
+scatter.smooth(environ_cue$Eini_variability,environ_cue$RT, las=1,cex.lab=1.4,pch=16,yaxt='n',cex.axis=1.2,lwd=2,ylab=' ',ylim=c(80,90),xlab ='',lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext('Reproductive timing',2,cex = 1.2,line=4)
+mtext('(b)',side = 3,line = -2,cex=1.2,adj = 0.05)
+axis(2,at = 80:90,labels = format(as.Date((80:90)+75, origin=as.Date("1960-01-01")),format="%d-%b"),las=1)
+
+par(xpd=NA)
+rect(-18.5,78.7,10.8,90.5)
+
+timing_cue = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_timing_cue_with_noise.csv')
+scatter.smooth(timing_cue$Eini_variability,timing_cue$ESS, las=1,cex.lab=1.4,pch=16,yaxt='n',cex.axis=1.2,lwd=2,ylab=' ',ylim=c(80,90),xlab= '',lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+mtext('Reproductive timing',2,cex = 1.2,line=4)
+mtext('(c)',side = 3,line = -2,cex=1.2,adj = 0.05)
+axis(2,at = 80:90,labels = format(as.Date((80:90)+75, origin=as.Date("1960-01-01")),format="%d-%b"),las=1)
+
+
+mtext(expression(paste('Variability in the amount of snow (cm) on March 15th (',E[0],')'),sep=''),side = 1,line = -0.8,at = 0.55,outer = T,cex=1.2)
+
+
+dev.off()
+```
+
+
+
+# This plot looks at different forms of noise but still holds mean and variance constant
+```{r,echo=F,eval=T,include=T}
+
+# Pull in data from simulations here
+
+
+pdf('Manuscript/figures/ESS_and_RT_different_distributions.pdf',width = 5,height = 10)
+par(mfrow=c(5,1),mar=c(3,0,1,10),oma=c(4,6,0.5,0))
+
+# Uniform distribution (standard results)
+randomE0 = runif(1000,12.5,23.5)
+mean(randomE0);var(randomE0)
+hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='',ylab='',xlab='',col=1,las=1)
+mtext('ESS = 3.13 cm',side = 3,at = 35,line = -4.9)
+mtext('  RT  = June 15',side = 3,at = 35,line = -6.1)
+
+# Normal distribution
+randomE0 = rnorm(1000,18,3.2)
+mean(randomE0);var(randomE0)
+#hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='ESS = 3.13 , RT = 86.3579',ylab='',xlab='',col=1,las=1)
+hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='',ylab='',xlab='',col=1,las=1)
+mtext('ESS = 3.13 cm',side = 3,at = 35,line = -4.9)
+mtext('  RT  = June 15',side = 3,at = 35,line = -6.1)
+
+# Uniform distribution with rare events
+# rare_events = c(rep(8,times=50),rep(28,times=50))
+# randomE0 = runif(900,18-0.5,18+0.5)
+# randomE0 = c(rare_events,randomE0)
+# mean(randomE0);var(randomE0)
+# hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='ESS = 3.1325 , RT = 86.48',ylab='',xlab='',col=1,las=1)
+
+
+# Single point with rare events
+rare_events = c(rep(8,times=50),rep(28,times=50))
+randomE0 = rep(18,900)
+randomE0 = c(rare_events,randomE0)
+mean(randomE0);var(randomE0)
+#hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='ESS = 3.1325, RT = 86.4841',ylab='',xlab='',col=1,las=1)
+hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='',ylab='',xlab='',col=1,las=1)
+mtext('ESS = 3.13 cm',side = 3,at = 35,line = -4.9)
+mtext('  RT  = June 15',side = 3,at = 35,line = -6.1)
+
+
+# Normal with rare events
+rare_events = c(rep(8,times=50),rep(28,times=50))
+randomE0 = rnorm(900,mean = 18,sd=0.3)
+randomE0 = c(rare_events,randomE0)
+mean(randomE0);var(randomE0)
+#hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='ESS = 3.1325 , RT = 86.3860',ylab='',xlab='',col=1,las=1)
+hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='',ylab='',xlab='',col=1,las=1)
+mtext('ESS = 3.13 cm',side = 3,at = 35,line = -4.9)
+mtext('  RT  = June 15',side = 3,at = 35,line = -6.1)
+
+
+
+
+# Only rare events
+rare_events = c(rep(14.85,times=50),rep(21.15,times=50))
+randomE0 = rare_events
+mean(randomE0);var(randomE0)
+#hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='ESS = 3.145, RT = 86.5632',ylab='',xlab='',col=1,las=1)
+hist(randomE0,xlim=c(5,30),ylim=c(0,0.3),breaks=seq(1,30,by=0.49),freq = F,main='',ylab='',xlab='',col=1,las=1)
+mtext('ESS = 3.14 cm',side = 3,at = 35,line = -4.9)
+mtext('  RT  = June 15',side = 3,at = 35,line = -6.1)
+
+mtext(expression(paste('March 15th snow depth (',E[0],')'),sep=''),side = 1,line = 3,outer = F,cex=1.2)
+mtext('Frequency',side = 2,line = 3,at = 0.5,outer = T,cex=1.2)
+
+dev.off()
+
+```
+
+
+
+\section{Expanded sensitivitiy analyses for u_E}
+
+```{r,echo=F,eval=T,fig.cap="(a) Predicted evolutionary stable strategy and (b) day of reproduction for different values juvenile summer mortality with snow present, $u_E$. The light grey box indicates value of parameter where the population is not viable. The vertical line is the default parameter value found in Table 1 of the main text.\\label{fig:ESS_vs_u_E}",fig.height=3}
+
+grey_box = function(ESS_output){
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+  
+  rect(xleft=ifelse((head(which(is.na(ESS_output$ESS)),1)-1)<1, min(param_value), ESS_output$param_value[head(which(is.na(ESS_output$ESS)),1)-1]),ybottom =-10,xright = ifelse((tail(which(is.na(ESS_output$ESS)),1)+1)>length(param_value), max(param_value), ESS_output$param_value[tail(which(is.na(ESS_output$ESS)),1)+1]), ytop = 200,col = rgb(0.5,0.5,0.5,0.2),border = NA)
+}
+
+
+# Load model results
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/environ_rule_sensitivity_analysis_u_E.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+ESS_output$ESS[ESS_output$ESS==0]=NA
+ESS_output$RT[ESS_output$RT==0]=NA
+
+#pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,3),mar=c(4.5,6,0.5,0.75),oma=c(0,0,0,0))
+
+#scatter.smooth(param_value,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,ESS_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('ESS (cm)',2,cex = 1.3,line=4)
+mtext('(a)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.005,col='black')
+grey_box(ESS_output)
+#scatter.smooth(param_value,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.005,col='black')
+grey_box(ESS_output)
+
+
+# Add results for the timing cue
+ESS_output = read.csv('../Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/timing_rule_sensitivity_analysis_u_E.csv')
+  param_value = ESS_output$param_value
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+ESS_output[ESS_output=='NaN']=NA
+ESS_output$ESS[ESS_output$ESS==0]=NA
+ESS_output$RT[ESS_output$RT==0]=NA
+
+plot(param_value,RT_Eini,pch=16,cex.lab=1.4,cex.axis=1.2,font=1,lwd=2,ylab=' ',xlab='',las=1,type='l')
+mtext('day of reproduction',2,cex = 1.3,line=4)
+mtext('(b)',side = 3,line = -1.5,cex=1.2,adj = 0.1)
+abline(v=0.005,col='black')
+grey_box(ESS_output)
+
+
+mtext(expression(paste('juvenile summer snow mortality rate (',u[E],')',sep='')),side=1,line=-1.5,outer=T,cex=1.3,adj = 0.7)
+#dev.off()
+```
+
+
+
+
+
+
+<!--
+This is the main plot in the manuscript for the environmental cue
+```{r,echo=F,eval=T,include=F}
+# Build four plots: 1) ESS vs E0, 2) RT vs E0, 3) ESS vs Var, 4) RT vs Var
+
+# Pull in matlab results
+
+require(R.matlab)
+#invader_fitness_output=readMat('../Modeling/BirthPulseModel/FINAL_MODELS-general-attractor/findESS_output_invader_fitness_environ_rule.mat')
+
+ESS_output = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_environmental_cue_no_noise.csv')
+ # Eini_vector= invader_fitness_output$ESS.output.mean[,4]
+  #ESS_Eini = invader_fitness_output$ESS.output.mean[,1]
+#  RT_Eini = invader_fitness_output$ESS.output.mean[,2]
+  Eini_vector = ESS_output$Eini
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+
+ESS_output = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_environmental_cue_with_noise.csv')
+  #variance_vector = invader_fitness_output$ESS.output.variance[,5]
+  #ESS_variance = invader_fitness_output$ESS.output.variance[,1]
+  #RT_variance = invader_fitness_output$ESS.output.variance[,2]
+  variance_vector = ESS_output$Eini_variability
+  ESS_variance = ESS_output$ESS
+  RT_variance = ESS_output$RT
+
+
+pdf('Manuscript/figures/environmental_cue_default_params.pdf',width = 10,height = 4)
+par(mfrow=c(1,4),mar=c(4.5,6,0.5,0.75))
+
+scatter.smooth(Eini_vector,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(E[0]),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+#points(Eini_vector,ESS_Eini,pch=16)
+mtext('ESS (cm)',2,cex = 1.4,line=4)
+mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+scatter.smooth(Eini_vector,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(E[0]),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+#points(Eini_vector,RT_Eini,pch=16)
+mtext('day of reproduction',2,cex = 1.4,line=4)
+mtext('(b)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+scatter.smooth(variance_vector,ESS_variance,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(paste('variability in ', E[0],sep='')),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+#points(variance_vector,ESS_variance,pch=16)
+mtext('ESS (cm)',2,cex = 1.4,line=4)
+mtext('(c)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+scatter.smooth(variance_vector,RT_variance,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(paste('variability in ', E[0],sep='')),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1,ylim=c(137,147))
+#points(variance_vector,RT_variance,pch=16)
+mtext('day of reproduction',2,cex = 1.4,line=4)
+mtext('(d)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+
+
+
+
+dev.off()
+
+```
+
+
+This is the main plot in the manuscript for the timing cue
+```{r,echo=F,eval=T,include=F}
+# This is for the timing cue
+# Build two plots: 1) ESS/RT vs E0, 2) ESS/RT vs Var
+
+# Pull in matlab results
+
+require(R.matlab)
+# invader_fitness_output=readMat('../Modeling/BirthPulseModel/FINAL_MODELS-general-attractor/findESS_output_invader_fitness_timing_rule.mat')
+# 
+#   Eini_vector= invader_fitness_output$ESS.output.mean[,4]
+#   ESS_Eini = invader_fitness_output$ESS.output.mean[,1]
+#   RT_Eini = invader_fitness_output$ESS.output.mean[,2]
+#   
+#   
+#   variance_vector = invader_fitness_output$ESS.output.variance[,5]
+#   ESS_variance = invader_fitness_output$ESS.output.variance[,1]
+#   RT_variance = invader_fitness_output$ESS.output.variance[,2]
+
+
+
+ESS_output = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_timing_cue.csv')
+  Eini_vector = ESS_output$Eini
+  ESS_Eini = ESS_output$ESS
+  RT_Eini = ESS_output$RT
+
+ESS_output = read.csv('Modeling/BirthPulseModel/FINAL_MODELS_general_attractor_either_cue/model_outputs/findESS_output_table_timing_cue_withnoise.csv')
+  variance_vector = ESS_output$Eini_variability
+  ESS_variance = ESS_output$ESS
+  RT_variance = ESS_output$RT
+
+pdf('Manuscript/figures/timing_cue_default_params.pdf',width = 6,height = 4)
+par(mfrow=c(1,2),mar=c(4.5,6,0.5,0.75))
+
+# scatter.smooth(Eini_vector,ESS_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(E[0]),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+# #points(Eini_vector,ESS_Eini,pch=16)
+# mtext('ESS (cm)',2,cex = 1.2,line=4)
+# mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+scatter.smooth(Eini_vector,RT_Eini,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(E[0]),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=2)
+#points(Eini_vector,RT_Eini,pch=16)
+mtext('day of reproduction',2,cex = 1.4,line=4)
+mtext('(a)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+# scatter.smooth(variance_vector,ESS_variance,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab='noise',las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1)
+# #points(variance_vector,ESS_variance,pch=16)
+# mtext('ESS (cm)',2,cex = 1.2,line=4)
+# mtext('(c)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+scatter.smooth(variance_vector,RT_variance,type='n',cex.lab=1.4,cex.axis=1.2,font=2,lwd=2,ylab=' ',xlab=expression(paste('variability in ', E[0],sep='')),las=1,lpars =list(col = "black", lwd = 3, lty = 1),family='gaussian',span = 1,degree=1,ylim=range(RT_variance)+c(-0,0.05))
+#points(variance_vector,RT_variance,pch=16)
+mtext('day of reproduction',2,cex = 1.4,line=4.5)
+mtext('(b)',side = 3,line = -2,cex=1.2,adj = 0.05)
+
+
+
+
+dev.off()
+
+```
+
+-->
+
+```{r,echo=F,eval=F,include=F}
+# This code will create contour plot of predicted ESS vs mean and variance in timing of spring snowmelt
+
+# Pull in results from findESS....code.m where we looked at different values for mean and variance
+setwd("~/Dropbox/IIASA2016-pika-project/Modeling/BirthPulseModel/environ_decision_rule/FINAL_MODEL_environ_decision_rule_perdaymodel")
+output=read.csv('findESS_output_table_environ_output.csv',header=T)
+
+# Create contour plot to be manuscript centerpiece
+# Pull in ESS results for changing values of the mean and variance of spring snowmelt
+
+E0_vector = seq(1,18,by=0.5)
+VarE0_vector = seq(0.2,6,by=0.2)
+
+pdf('ESS_versus_E0_and_Var_environ_rule.pdf',width = 6,height = 6) #make a countour or levelplot of 3d data
+
+    emptyCell=invader_fitness_output$emptyCell
+    contour(z=emptyCell,x=seq(10,18,by=2),y=seq(5,20,by=3),col=1,nlevels=30,ylim=c(2,18),xlim=c(2,18))
+    
+    x=seq(5,18,by=2);y=seq(6,20,by=2)
+    grid<-expand.grid(x=x,y=y)
+    levelplot(emptyCell~x*y,grid,cuts=30,colorkey = T,contour=T,labels=T,pretty=T,region=T,col.regions = terrain.colors(50))
+
+dev.off()
+
+
+
+
+```
