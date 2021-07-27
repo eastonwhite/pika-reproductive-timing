@@ -1,2 +1,5 @@
-# pika-reproductive-timing
-This repository contains code and a manuscript for studying the timing of reproduction in pikas. The project was part of my project at IIASA in summer 2016
+# Evolution of reproductive timing for a small mammal population 
+
+This repository contains code and a manuscript for studying the evolution of reproductive timing in pikas. 
+
+The paper is currently under review. Preprint available at: https://peerj.com/preprints/27435/
